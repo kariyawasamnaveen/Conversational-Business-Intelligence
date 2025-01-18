@@ -1,0 +1,5 @@
+Query,Action,Column Name
+ප්‍රමාණය සඳහා සරසවනය,average,Quantity
+ප්‍රමාණය සඳහා උපරිම අගය,maximum,Quantity
+විකුණුම් සඳහා උපරිම අගය,maximum,Sales
+විකුණුම් සඳහා සරසවනය,average,Sales
