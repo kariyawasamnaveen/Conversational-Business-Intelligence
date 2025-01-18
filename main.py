@@ -1,6 +1,11 @@
-from tkinter import Tk, Label, Frame, StringVar, OptionMenu, Button, Entry
+from ttkbootstrap import Style
+from ttkbootstrap.constants import *
+from tkinter import StringVar
+from tkinter.ttk import Frame, Treeview, Label, Combobox, Entry, Button
+from ttkbootstrap.dialogs import Messagebox
 from utils.translator import TranslatorUtility
 from utils.calculator import DataCalculator
+
 
 # Initialize utilities
 translator = TranslatorUtility()
@@ -13,7 +18,8 @@ column_translation_map = {
 }
 inverse_column_translation_map = {v: k for k, v in column_translation_map.items()}
 
-# GUI Functions
+
+# Function to calculate results
 def calculate_result(operation):
     selected_column_sinhala = column_selection.get()
     selected_column = inverse_column_translation_map.get(selected_column_sinhala, None)
@@ -26,46 +32,70 @@ def calculate_result(operation):
             result = calculator.calculate_maximum(selected_column)
         result_entry.insert(0, f"{result:.2f}")
     else:
-        result_entry.insert(0, translator.translate_to_sinhala("Invalid Selection"))
+        Messagebox.show_error(translator.translate_to_sinhala("Invalid Selection"))
 
-# GUI Setup
-root = Tk()
-root.title(translator.translate_to_sinhala("Data Analysis"))
-root.geometry("600x400")
 
-# Table Display
-table_frame = Frame(root)
-table_frame.pack(pady=10)
+# Create main window
+style = Style(theme="flatly")  # Modern theme
+root = style.master
+root.title(translator.translate_to_sinhala("Conversational Business Intelligence"))
+root.geometry("900x600")
+root.resizable(False, False)
 
-headers = ["Product", "Category", "Sales", "Quantity"]
-translated_headers = [
-    translator.translate_to_sinhala(header) if header in column_translation_map else header for header in headers
+# Header Section
+header_frame = Frame(root, padding=10)
+header_frame.pack(fill=X)
+header_label = Label(header_frame, text=translator.translate_to_sinhala("Conversational Business Intelligence"),
+                     font=("Helvetica", 18, "bold"))
+header_label.pack(pady=5)
+
+# Table Section
+table_frame = Frame(root, padding=10)
+table_frame.pack(fill=BOTH, expand=True)
+
+# Create Treeview table
+columns = ["Product", "Category", "Sales", "Quantity"]
+translated_columns = [
+    translator.translate_to_sinhala(col) if col in column_translation_map else col for col in columns
 ]
-for j, col in enumerate(translated_headers):
-    Label(table_frame, text=col, borderwidth=1, relief="solid", width=15).grid(row=0, column=j)
+tree = Treeview(table_frame, columns=columns, show="headings", height=10)
 
-for i, row in calculator.data.iterrows():
-    Label(table_frame, text=row.get("Product", ""), borderwidth=1, relief="solid", width=15).grid(row=i + 1, column=0)
-    Label(table_frame, text=row.get("Category", ""), borderwidth=1, relief="solid", width=15).grid(row=i + 1, column=1)
-    Label(table_frame, text=row.get("Sales", ""), borderwidth=1, relief="solid", width=15).grid(row=i + 1, column=2)
-    Label(table_frame, text=row.get("Quantity", ""), borderwidth=1, relief="solid", width=15).grid(row=i + 1, column=3)
+# Define column widths and headings
+for col, translated_col in zip(columns, translated_columns):
+    tree.heading(col, text=translated_col, anchor=CENTER)
+    tree.column(col, anchor=CENTER, width=200)
 
-# Dropdown for Column Selection
-input_frame = Frame(root)
-input_frame.pack(pady=20)
+# Add data to the table
+for _, row in calculator.data.iterrows():
+    tree.insert("", "end", values=(row["Product"], row["Category"], row["Sales"], row["Quantity"]))
 
-column_selection = StringVar()
-column_selection.set(column_translation_map["Sales"])  # Default selection
-OptionMenu(input_frame, column_selection, *column_translation_map.values()).grid(row=0, column=1, padx=5)
+tree.pack(fill=BOTH, expand=True)
 
-# Entry for Result
-Label(input_frame, text=translator.translate_to_sinhala("Result:")).grid(row=0, column=2, padx=5)
-result_entry = Entry(input_frame, width=20)
-result_entry.grid(row=0, column=3, padx=5)
+# Input Section
+input_frame = Frame(root, padding=10)
+input_frame.pack(fill=X, pady=10)
 
-# Buttons for Calculations
-Button(input_frame, text=translator.translate_to_sinhala("Show Average"), command=lambda: calculate_result("Average")).grid(row=1, column=1, pady=10)
-Button(input_frame, text=translator.translate_to_sinhala("Show Maximum"), command=lambda: calculate_result("Maximum")).grid(row=1, column=3, pady=10)
+Label(input_frame, text=translator.translate_to_sinhala("Select Column:"), font=("Helvetica", 12)).pack(side=LEFT, padx=5)
+column_selection = StringVar(value=column_translation_map["Sales"])
+Combobox(input_frame, textvariable=column_selection, values=list(column_translation_map.values()),
+         font=("Helvetica", 12), width=20).pack(side=LEFT, padx=5)
 
-# Run GUI
+Label(input_frame, text=translator.translate_to_sinhala("Result:"), font=("Helvetica", 12)).pack(side=LEFT, padx=5)
+result_entry = Entry(input_frame, font=("Helvetica", 12), width=25)
+result_entry.pack(side=LEFT, padx=5)
+
+# Button Section
+button_frame = Frame(root, padding=10)
+button_frame.pack(fill=X)
+
+Button(button_frame, text=translator.translate_to_sinhala("Show Average"),
+       command=lambda: calculate_result("Average")).pack(side=LEFT, padx=10)
+
+Button(button_frame, text=translator.translate_to_sinhala("Show Maximum"),
+       command=lambda: calculate_result("Maximum")).pack(side=LEFT, padx=10)
+
+Button(button_frame, text=translator.translate_to_sinhala("Exit"),
+       command=root.destroy).pack(side=RIGHT, padx=10)
+
+# Run the GUI
 root.mainloop()
